@@ -2,6 +2,9 @@
 \documentclass[conference,a4paper]{IEEEtran}
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb,graphicx,booktabs,url}
+\usepackage{xcolor,soul}
+% Remove the wrapper after revising a highlighted passage.
+\newcommand{\pendingedit}[1]{\hl{#1}}
 \usepackage[hidelinks]{hyperref}
 \title{DUAL: Dual Ocular Screener for Cataract and Glaucoma Triage from Fundus Photographs}
 \author{\IEEEauthorblockN{Anel Bazarbayeva, Negar Kamvij, Shridhi Patel, Bhoami Khona,\\
@@ -29,9 +32,9 @@ photographs but was near chance on the tightly cropped ACRIMA set. Sensitivity f
 validation floor, and the calibrated probabilities were far too low. In the shortcut checks, the
 cataract head referred most hazy or strongly blurred photographs without cataract, and the strongest
 point of the glaucoma heatmap fell inside the optic disc in 37\% of ORIGA and 67\% of DRISHTI-GS
-photographs. DUAL is a research prototype, and these external results and shortcut checks show what
+photographs. \pendingedit{DUAL is a research prototype, and these external results and shortcut checks show what
 must improve before it could be used clinically. [Pending: update once the frozen model is connected
-to the application.]
+to the application.]}
 
 \end{abstract}
 \begin{IEEEkeywords}
@@ -73,9 +76,9 @@ same training loop; (3) calibration, decision thresholds and an abstention band 
 validation only and frozen before any test data were scored; (4) external validation on four public
 data sets that were never used for training, scored with the frozen settings; (5) shortcut checks,
 consisting of a haze check on media-opacity eyes, a synthetic blur test and Grad-CAM \cite{ref10}
-heatmaps of the cataract and glaucoma outputs, including an optic disc check; and (6) a prototype
+heatmaps of the cataract and glaucoma outputs, including an optic disc check; and \pendingedit{(6) a prototype
 web application for the screening workflow, which still uses a mock scoring model until the frozen
-model is connected. [Pending: update once the frozen model is connected to the application.]
+model is connected. [Pending: update once the frozen model is connected to the application.]}
 
 Section II reviews related work. Sections III to V describe the data, labels and preprocessing,
 Sections VI and VII cover the model, training and calibration, and Section VIII reports the results.
@@ -493,8 +496,8 @@ what drives its decisions.
 
 \section{Application}
 
-DUAL includes a prototype web application for clinic staff. [Pending: final description once the
-application features are complete.] A user selects a patient and the left or right eye, and uploads
+\pendingedit{DUAL includes a prototype web application for clinic staff. [Pending: final description once the
+application features are complete.]} A user selects a patient and the left or right eye, and uploads
 one fundus photograph as a JPG or PNG file of up to 20 MB. The application runs the quality check,
 stores the original photograph and its 512 \(\times\) 512 preprocessed copy, and scores the
 photograph. For each condition, it shows the result (No concern, Refer, or Uncertain, refer), the
@@ -507,16 +510,16 @@ in Python with FastAPI and hosted on Render, which provides 20 REST endpoints fo
 photographs, screenings, PDF exports and model information. Records are stored in a PostgreSQL
 database on Supabase, and photographs and heatmaps are kept in private Supabase Storage buckets that
 the browser can reach only through the API. Staff passwords are stored as PBKDF2 hashes, and
-sessions use an HttpOnly cookie that expires after 12 hours. Sign-in and PDF export of screening and
+sessions use an HttpOnly cookie that expires after 12 hours. \pendingedit{Sign-in and PDF export of screening and
 patient summaries are implemented and tested in the back end, but the front end does not yet include
 a sign-in page or an export button. [Pending: update once the sign-in page and PDF export are added
-to the front end.]
+to the front end.]}
 
-In the current version, the back end uses a stand-in model that returns placeholder scores and
+\pendingedit{In the current version, the back end uses a stand-in model that returns placeholder scores and
 heatmaps, clearly marked as mock, so that the whole workflow can be tested end to end. Connecting
 the frozen shared model (seed 42) and its calibration to the application is planned for the final
 sprint. [Pending: update once the frozen model and its calibration are connected to the
-application.] The application contains only fictitious patient records and is intended for academic,
+application.]} The application contains only fictitious patient records and is intended for academic,
 non-commercial use.
 
 \begin{figure*}[t]
@@ -598,16 +601,16 @@ calibration should be checked on photographs from each new camera and population
 with patient identifiers so that confidence intervals account for both eyes of a person. Training
 with media-opacity and blurred photographs labelled as not cataract, or with image-quality labels,
 could reduce the sensitivity to haze, and disc-centred images, as used by G-RISK \cite{ref9}, could
-make glaucoma detection more stable across data sets. Finally, connecting the frozen model to the
+make glaucoma detection more stable across data sets. \pendingedit{Finally, connecting the frozen model to the
 web application and testing it with clinic staff would show whether the referral load is workable in
-practice. [Pending: revise once the model connection and application testing are complete.]
+practice. [Pending: revise once the model connection and application testing are complete.]}
 
 \section*{AI Use Disclosure}
 
 Generative AI assistants were used as support tools during this project, as allowed by the course
-instructor when their use is disclosed. They helped with drafting and editing project documents,
+instructor when their use is disclosed. \pendingedit{They helped with drafting and editing project documents,
 writing and reviewing parts of the code and tests, checking references and preparing tables and
-figures. [Pending: confirm once every team member has reported their AI use.] Every AI-assisted
+figures. [Pending: confirm once every team member has reported their AI use.]} Every AI-assisted
 output was checked and edited by a team member before it was used or submitted. The team made all
 project decisions and is responsible for the code, the documentation and the results it presents.
 Every reported result comes from the team's committed code and result files.
