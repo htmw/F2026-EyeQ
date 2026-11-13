@@ -20,3 +20,19 @@ Use inline math for short expressions such as `\(p\)`. For a numbered formula, i
 ```
 
 Here \(p\) is the calibrated probability, \(t\) is the threshold, and \(m\) is the margin.
+
+### Save both copies in VS Code
+
+Open the repository folder in VS Code with LaTeX Workshop installed. Save
+`paper.tex` or `version-history.tex` to rebuild `paper.pdf` and `paper.docx`
+beside the manuscript. Edit the TeX source because the next build replaces the Word copy.
+
+For a new macOS or Linux checkout, set up the Word exporter once from this directory:
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install python-docx
+```
+
+The exporter supports the manuscript's current LaTeX structure. Check the Word
+rendering when introducing new LaTeX commands, especially equations.
