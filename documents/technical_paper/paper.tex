@@ -196,7 +196,7 @@ the original photographs are never modified.
 
 \section{Model and Training}
 
-All models use a ResNet-50 backbone \cite{ref25} initialised with ImageNet weights \cite{ref26}. The
+All models were implemented in PyTorch and use a ResNet-50 backbone \cite{ref25} initialised with ImageNet weights \cite{ref26}. The
 final classification layer is removed, so the backbone returns a 2,048-value feature vector for each
 512 \(\times\) 512 input image. The DUAL model attaches two separate linear heads to this shared
 backbone, one for cataract and one for glaucoma, and each head outputs a single logit. For the
