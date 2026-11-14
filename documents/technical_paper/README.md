@@ -31,8 +31,8 @@ For a new macOS or Linux checkout, set up the Word exporter once from this direc
 
 ```sh
 python3 -m venv .venv
-.venv/bin/python -m pip install python-docx
+.venv/bin/python -m pip install python-docx pypdfium2 Pillow
 ```
 
-The exporter supports the manuscript's current LaTeX structure. Check the Word
+The exporter creates two Word files. `paper.docx` contains a high-resolution image of each compiled PDF page to preserve the IEEE layout. `paper-editable.docx` contains editable paragraphs and tables and may paginate differently. Check the Word
 rendering when introducing new LaTeX commands, especially equations.

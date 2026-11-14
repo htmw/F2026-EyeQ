@@ -1,12 +1,15 @@
 """Export the IEEE manuscript and its revision table as an editable Word file."""
 import os
 import tempfile
+from io import BytesIO
+import pypdfium2 as pdfium
 import re
 from pathlib import Path
 from docx import Document
 from docx.shared import Inches, Pt, Mm, RGBColor
 from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_COLOR_INDEX
+from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 os.chdir(Path(__file__).resolve().parent)
@@ -15,22 +18,37 @@ s = d.sections[0]
 s.page_width = Mm(210)
 s.page_height = Mm(297)
 s.left_margin = s.right_margin = Inches(0.58)
-s.top_margin = s.bottom_margin = Inches(0.75)
+s.top_margin = Inches(0.75)
+s.bottom_margin = Mm(43)
 for st in ["Normal", "Title", "Heading 1", "Heading 2"]:
     f = d.styles[st].font
     f.name = "Times New Roman"
     f.size = Pt({"Normal": 10, "Title": 22, "Heading 1": 11, "Heading 2": 10}[st])
     f.color.rgb = RGBColor(0, 0, 0)
     fmt = d.styles[st].paragraph_format
-    fmt.space_after = Pt(3)
+    fmt.space_after = Pt(0)
     fmt.line_spacing = 1
+
+
+title_style = d.styles["Title"]
+border = title_style.element.find(".//" + qn("w:pBdr"))
+if border is not None:
+    border.getparent().remove(border)
+for name in ("Title", "Heading 1", "Heading 2"):
+    style = d.styles[name]
+    style.font.bold = False
+    fonts = style.element.get_or_add_rPr().rFonts
+    for attr in ("asciiTheme", "hAnsiTheme"):
+        fonts.attrib.pop(qn("w:" + attr), None)
+d.styles["Heading 1"].font.small_caps = True
+d.styles["Heading 2"].font.italic = True
 
 
 def cols(n, kind=WD_SECTION.CONTINUOUS):
     sec = d.add_section(kind)
     c = sec._sectPr.find(qn("w:cols"))
     c.set(qn("w:num"), str(n))
-    c.set(qn("w:space"), "300")
+    c.set(qn("w:space"), str(Mm(4.22).twips))
 
 
 def clean(x):
@@ -48,31 +66,69 @@ def clean(x):
         .replace(r"\%", "%")
         .replace(r"\_", "_")
         .replace(r"\&", "&")
-        .replace("~", " ")
+        .replace("~", " ").replace("``", "“").replace("''", "”")
         .split()
     )
 
 
 def write(x, style=None, center=False):
     p = d.add_paragraph(style=style)
+    if style is None and not center:
+        p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        p.paragraph_format.first_line_indent = Inches(0.14)
     if center:
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     for j, t in enumerate(re.split(r"\\pendingedit\{([^}]*)\}", clean(x))):
         run = p.add_run(t)
         if j % 2:
             run.font.highlight_color = WD_COLOR_INDEX.YELLOW
+    if x.startswith(("Abstract  ", "Index Terms  ")):
+        first = p.runs[0]
+        label, _, rest = first.text.partition(" ")
+        if x.startswith("Index Terms"):
+            label, rest = "Index Terms", first.text[len("Index Terms "):]
+        first.text = rest
+        prefix = p.add_run(label + "—")
+        first._r.addprevious(prefix._r)
+        prefix.italic = True
+        for run in p.runs:
+            run.bold = True
+            run.font.size = Pt(9)
     return p
 
 
-def table(rows, widths):
+def caption(text, center=False):
+    p = write(text, center=center)
+    p.paragraph_format.first_line_indent = Pt(0)
+    for run in p.runs:
+        run.font.size = Pt(8)
+
+
+def table(rows, widths, grid=False):
     t = d.add_table(rows=0, cols=len(widths))
-    t.style = "Table Grid"
+    if grid:
+        t.style = "Table Grid"
+    else:
+        borders = OxmlElement("w:tblBorders")
+        for edge in ("top", "bottom"):
+            rule = OxmlElement("w:" + edge)
+            rule.set(qn("w:val"), "single")
+            rule.set(qn("w:sz"), "6")
+            borders.append(rule)
+        t._tbl.tblPr.append(borders)
     t.autofit = False
     for col, w in zip(t.columns, widths):
         col.width = Inches(w)
     for i, row in enumerate(rows):
         assert len(row) == len(widths), row
         for cell, txt, w in zip(t.add_row().cells, row, widths):
+            if i == 0 and not grid:
+                borders = OxmlElement("w:tcBorders")
+                rule = OxmlElement("w:bottom")
+                rule.set(qn("w:val"), "single")
+                rule.set(qn("w:sz"), "4")
+                borders.append(rule)
+                cell._tc.get_or_add_tcPr().append(borders)
             cell.width = Inches(w)
             p = cell.paragraphs[0]
             p.paragraph_format.space_after = Pt(2)
@@ -89,7 +145,13 @@ for x in [
         1
     ].split(r"\\"),
 ]:
-    write(x, None, True)
+    p = write(x, None, True)
+    for run in p.runs:
+        if "@" in x:
+            run.font.name = "Courier New"
+            run.font.size = Pt(9)
+        elif x.strip().startswith(("Seidenberg", "Pace University")):
+            run.italic = True
 cols(2)
 body = src.split(r"\maketitle")[1].split(r"\input")[0]
 body = re.sub(r"(?m)^%.*", "", body)
@@ -122,9 +184,9 @@ for x in re.split(pat, body, flags=re.S):
                 re.search(r"\\includegraphics\[[^]]*\]\{([^}]+)", x)[1],
                 width=Inches(6.4 if wide else 3.25),
             )
-            write("Fig. " + label[2] + ". " + cap)
+            caption("Fig. " + label[2] + ". " + cap)
         else:
-            write("TABLE " + label[2] + ". " + cap, None, True)
+            caption("TABLE " + label[2] + "\n" + cap, True)
             data = (
                 x.split(r"\toprule")[1]
                 .split(r"\bottomrule")[0]
@@ -152,19 +214,71 @@ for x in re.split(pat, body, flags=re.S):
     else:
         for a in re.split(r"\n\s*\n", x):
             if a.strip():
-                write(a)
+                p = write(a)
+                if re.match(r"^\[\d+\] ", a):
+                    p.paragraph_format.left_indent = Inches(0.24)
+                    p.paragraph_format.first_line_indent = Inches(-0.24)
+                    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                    for run in p.runs:
+                        run.font.size = Pt(8)
 cols(1, WD_SECTION.NEW_PAGE)
 write("Version History", "Heading 1", True)
 rows = [["Version", "Date", "Changes"]] + [
     line.split(r"\\")[0].strip().split(" & ")
     for line in Path("version-history.tex").read_text(encoding="utf-8").splitlines()
-    if re.match(r"^0\.\d+ &", line)
+    if re.match(r"^\s*\d+(?:\.\d+)*\s+&", line)
 ]
-table(rows, [0.57, 1, 5.38])
-with tempfile.NamedTemporaryFile(dir=".", suffix=".docx", delete=False) as temporary:
-    output = Path(temporary.name)
-try:
-    d.save(output)
-    output.replace("paper.docx")
-finally:
-    output.unlink(missing_ok=True)
+table(rows, [0.57, 1, 5.38], grid=True)
+def save_document(document, filename):
+    with tempfile.NamedTemporaryFile(dir=".", suffix=".docx", delete=False) as temporary:
+        output = Path(temporary.name)
+    try:
+        document.save(output)
+        output.replace(filename)
+    finally:
+        output.unlink(missing_ok=True)
+
+
+def export_pdf_layout(pdf_path, filename):
+    """Place one high-resolution PDF page on each matching Word page."""
+    document = Document()
+    section = document.sections[0]
+    section.top_margin = section.bottom_margin = Pt(0)
+    section.left_margin = section.right_margin = Pt(0)
+    section.header_distance = section.footer_distance = Pt(0)
+    with pdfium.PdfDocument(pdf_path) as pages:
+        for index, page in enumerate(pages):
+            width, height = page.get_size()
+            section.page_width, section.page_height = Pt(width), Pt(height)
+            paragraph = document.add_paragraph()
+            fmt = paragraph.paragraph_format
+            fmt.page_break_before = index > 0
+            fmt.space_before = fmt.space_after = Pt(0)
+            fmt.line_spacing = Pt(1)
+            image = BytesIO()
+            page.render(scale=3).to_pil().save(image, format="PNG")
+            image.seek(0)
+            picture = paragraph.add_run().add_picture(image, width=Pt(width), height=Pt(height))
+            # Anchor the artwork to the physical page, independent of text baselines.
+            anchor = picture._inline
+            anchor.tag = qn("wp:anchor")
+            for key, value in {"simplePos": "0", "relativeHeight": "0", "behindDoc": "1",
+                               "locked": "1", "layoutInCell": "1", "allowOverlap": "1"}.items():
+                anchor.set(key, value)
+            origin = OxmlElement("wp:simplePos")
+            origin.set("x", "0")
+            origin.set("y", "0")
+            anchor.insert(0, origin)
+            for position, axis in enumerate(("H", "V"), start=1):
+                alignment = OxmlElement("wp:position" + axis)
+                alignment.set("relativeFrom", "page")
+                offset = OxmlElement("wp:posOffset")
+                offset.text = "0"
+                alignment.append(offset)
+                anchor.insert(position, alignment)
+            anchor.insert(anchor.index(anchor.find(qn("wp:docPr"))), OxmlElement("wp:wrapNone"))
+    save_document(document, filename)
+
+
+save_document(d, "paper-editable.docx")
+export_pdf_layout("paper.pdf", "paper.docx")
