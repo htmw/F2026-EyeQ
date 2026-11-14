@@ -137,7 +137,7 @@ def table(rows, widths, grid=False):
             r.bold = i == 0
 
 
-src = Path("paper.tex").read_text()
+src = Path("paper.tex").read_text(encoding="utf-8")
 write(re.search(r"\\title\{([^}]*)", src)[1], "Title", True)
 for x in [
     re.search(r"\\IEEEauthorblockN\{([^}]*)", src)[1].replace(r"\\", " "),
@@ -225,7 +225,7 @@ cols(1, WD_SECTION.NEW_PAGE)
 write("Version History", "Heading 1", True)
 rows = [["Version", "Date", "Changes"]] + [
     line.split(r"\\")[0].strip().split(" & ")
-    for line in Path("version-history.tex").read_text().splitlines()
+    for line in Path("version-history.tex").read_text(encoding="utf-8").splitlines()
     if re.match(r"^\s*\d+(?:\.\d+)*\s+&", line)
 ]
 table(rows, [0.57, 1, 5.38], grid=True)

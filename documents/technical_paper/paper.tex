@@ -428,7 +428,8 @@ from patients with no eye in training (28 referred, 80.0\%), so it is not explai
 having seen the fellow eye. This result meets the predefined warning criterion. It does not prove
 that the model relies on haze, because media opacity and cataract look alike and the two groups
 differ in other ways, but it does mean that a hazy photograph without cataract is likely to be
-referred.
+referred. Five patients had one eye in the media-opacity holdout and the other eye in
+the internal test set, which is an additional limitation of this comparison.
 
 A synthetic blur test, also defined in advance, addresses the same question more directly. The 396
 normal-fundus validation eyes were blurred with a Gaussian filter of increasing width (sigma of 0,
@@ -483,7 +484,9 @@ to the optic disc, where glaucomatous damage is visible on a fundus photograph. 
 the glaucoma output, taken from the same last convolutional block, were drawn for all 650 ORIGA and
 101 DRISHTI-GS photographs, the two external sets that include optic disc outlines. A hit was
 counted when the strongest point of the heatmap fell inside the disc outline, after the outline had
-been cropped and resized in the same way as the photograph. The peak fell inside the disc in 240 of
+been cropped and resized in the same way as the photograph. For ORIGA image 359, a 13-pixel
+annotation-width mismatch was corrected by zero-padding the right side of the optic disc mask
+before preprocessing. The peak fell inside the disc in 240 of
 650 ORIGA photographs (36.9\%) and 68 of 101 DRISHTI-GS photographs (67.3\%); Fig.~\ref{fig:2} (e to
 l) shows examples of both outcomes. This is far more often than a uniformly random peak location
 would produce, since the disc covers only about 2.4\% and 3.7\% of the 512 \(\times\) 512 image,
