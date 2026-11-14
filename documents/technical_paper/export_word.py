@@ -1,8 +1,6 @@
 """Export the IEEE manuscript and its revision table as an editable Word file."""
 import os
 import tempfile
-from io import BytesIO
-import pypdfium2 as pdfium
 import re
 from pathlib import Path
 from docx import Document
@@ -17,7 +15,7 @@ d = Document()
 s = d.sections[0]
 s.page_width = Mm(210)
 s.page_height = Mm(297)
-s.left_margin = s.right_margin = Inches(0.58)
+s.left_margin = s.right_margin = Inches(0.56)
 s.top_margin = Inches(0.75)
 s.bottom_margin = Mm(43)
 for st in ["Normal", "Title", "Heading 1", "Heading 2"]:
@@ -46,6 +44,10 @@ d.styles["Heading 2"].font.italic = True
 
 def cols(n, kind=WD_SECTION.CONTINUOUS):
     sec = d.add_section(kind)
+    paragraph = d.paragraphs[-1]
+    paragraph.paragraph_format.space_after = Pt(0)
+    paragraph.paragraph_format.line_spacing = Pt(1)
+    paragraph.add_run().font.size = Pt(1)
     c = sec._sectPr.find(qn("w:cols"))
     c.set(qn("w:num"), str(n))
     c.set(qn("w:space"), str(Mm(4.22).twips))
@@ -100,6 +102,7 @@ def write(x, style=None, center=False):
 def caption(text, center=False):
     p = write(text, center=center)
     p.paragraph_format.first_line_indent = Pt(0)
+    p.paragraph_format.keep_with_next = text.startswith("TABLE")
     for run in p.runs:
         run.font.size = Pt(8)
 
@@ -132,6 +135,7 @@ def table(rows, widths, grid=False):
             cell.width = Inches(w)
             p = cell.paragraphs[0]
             p.paragraph_format.space_after = Pt(2)
+            p.paragraph_format.keep_with_next = i == 0
             r = p.add_run(clean(txt))
             r.font.size = Pt(9)
             r.bold = i == 0
@@ -239,46 +243,4 @@ def save_document(document, filename):
         output.unlink(missing_ok=True)
 
 
-def export_pdf_layout(pdf_path, filename):
-    """Place one high-resolution PDF page on each matching Word page."""
-    document = Document()
-    section = document.sections[0]
-    section.top_margin = section.bottom_margin = Pt(0)
-    section.left_margin = section.right_margin = Pt(0)
-    section.header_distance = section.footer_distance = Pt(0)
-    with pdfium.PdfDocument(pdf_path) as pages:
-        for index, page in enumerate(pages):
-            width, height = page.get_size()
-            section.page_width, section.page_height = Pt(width), Pt(height)
-            paragraph = document.add_paragraph()
-            fmt = paragraph.paragraph_format
-            fmt.page_break_before = index > 0
-            fmt.space_before = fmt.space_after = Pt(0)
-            fmt.line_spacing = Pt(1)
-            image = BytesIO()
-            page.render(scale=3).to_pil().save(image, format="PNG")
-            image.seek(0)
-            picture = paragraph.add_run().add_picture(image, width=Pt(width), height=Pt(height))
-            # Anchor the artwork to the physical page, independent of text baselines.
-            anchor = picture._inline
-            anchor.tag = qn("wp:anchor")
-            for key, value in {"simplePos": "0", "relativeHeight": "0", "behindDoc": "1",
-                               "locked": "1", "layoutInCell": "1", "allowOverlap": "1"}.items():
-                anchor.set(key, value)
-            origin = OxmlElement("wp:simplePos")
-            origin.set("x", "0")
-            origin.set("y", "0")
-            anchor.insert(0, origin)
-            for position, axis in enumerate(("H", "V"), start=1):
-                alignment = OxmlElement("wp:position" + axis)
-                alignment.set("relativeFrom", "page")
-                offset = OxmlElement("wp:posOffset")
-                offset.text = "0"
-                alignment.append(offset)
-                anchor.insert(position, alignment)
-            anchor.insert(anchor.index(anchor.find(qn("wp:docPr"))), OxmlElement("wp:wrapNone"))
-    save_document(document, filename)
-
-
-save_document(d, "paper-editable.docx")
-export_pdf_layout("paper.pdf", "paper.docx")
+save_document(d, "paper.docx")
