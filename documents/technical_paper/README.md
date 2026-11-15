@@ -27,12 +27,18 @@ Open the repository folder in VS Code with LaTeX Workshop installed. Save
 `paper.tex` or `version-history.tex` to rebuild `paper.pdf` and `paper.docx`
 beside the manuscript. Edit the TeX source because the next build replaces the Word copy.
 
-For a new macOS or Linux checkout, set up the Word exporter once from this directory:
+For a new macOS or Linux checkout, run this once from the repository root:
 
 ```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install python-docx pypdfium2 Pillow
+sh documents/technical_paper/setup_word.sh
 ```
 
-The exporter creates two Word files. `paper.docx` contains a high-resolution image of each compiled PDF page to preserve the IEEE layout. `paper-editable.docx` contains editable paragraphs and tables and may paginate differently. Check the Word
-rendering when introducing new LaTeX commands, especially equations.
+This creates a local Python environment and installs the version of python-docx
+used by the exporter. A working TeX installation and the LaTeX Workshop extension
+are also required. After setup, save paper.tex in VS Code to rebuild both copies.
+
+The generated paper.docx has editable text, tables, references and captions.
+Only the three original figures are images. Word and LaTeX can paginate
+differently, so inspect the Word copy before submission. Direct Word edits are
+replaced on the next export. The exporter supports the current manuscript's
+LaTeX commands; new equation environments need exporter support and verification.
