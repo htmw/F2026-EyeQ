@@ -42,8 +42,9 @@ Only the three original figures are images. Word and LaTeX can paginate
 differently, so inspect the Word copy before submission. Direct Word edits are
 replaced on the next export. The exporter supports the manuscript's peach additions, red replacement markers,
 green replacement text, and yellow pending notes. Formulas are exported as editable
-Word equations. Both the original and expanded review tables are included, with
-peach shading on the added metric columns.
+Word equations. The approved paper keeps the expanded external-results table without review
+shading. Existing yellow pending notes remain. When review annotations are used,
+the exporter preserves their colours and table-column shading.
 
 After pulling an exporter update, rerun `sh documents/technical_paper/setup_word.sh`
 to install any added dependencies. The default VS Code recipe builds both PDF and

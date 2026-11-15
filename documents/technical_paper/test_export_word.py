@@ -22,7 +22,7 @@ class WordExportTests(unittest.TestCase):
         # A changed TeX paragraph must reach the next export, not a cached Word copy.
         paper = cls.root / 'paper.tex'
         paper.write_text(paper.read_text().replace(
-            r'\section{Results}', 'Export freshness check.\n\n' + r'\section{Results}'))
+            r'\section{Results}', r'\peachaddition{Export freshness check.} \proposedreplacement{Old wording} \suggestedwording{New wording}' + '\n\n' + r'\section{Results}'))
         subprocess.run([sys.executable, str(cls.root / 'export_word.py')], check=True)
         cls.doc = Document(cls.root / 'paper.docx')
 
@@ -39,16 +39,15 @@ class WordExportTests(unittest.TestCase):
         self.assertNotIn('\\', text)
         self.assertNotIn('\x01', text)
 
-    def test_both_external_tables_and_new_column_shading(self):
-        original = next(t for t in self.doc.tables if len(t.columns) == 5)
+    def test_only_approved_expanded_table_without_review_shading(self):
         expanded = next(t for t in self.doc.tables if len(t.columns) == 9)
-        self.assertEqual(len(original.rows), 6)
+        self.assertFalse(any(len(t.columns) == 5 for t in self.doc.tables))
         self.assertEqual(len(expanded.rows), 7)
         self.assertEqual(expanded.cell(2, 8).text, '0.228')
         for row in expanded.rows:
             for index, cell in enumerate(row.cells):
                 shades = list(cell._tc.tcPr.iter(qn('w:shd')))
-                self.assertEqual(bool(shades), index >= 5)
+                self.assertFalse(shades)
 
     def test_formulas_remain_editable(self):
         equations = list(self.doc._element.iter(qn('m:oMath')))

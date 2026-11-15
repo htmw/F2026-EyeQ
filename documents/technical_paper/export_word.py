@@ -306,7 +306,7 @@ for x in re.split(pat, body, flags=re.S):
                 count = len(rows[0])
                 widths = {3: [1.12, 1, 1.15], 5: [1.72, 0.90, 1.77, 1.24, 1.24],
                           9: [1.3, .65, 1.12, .78, .78, .55, .55, .65, .55]}[count]
-                table(rows, widths, review_columns=range(5, 9) if count == 9 else (),
+                table(rows, widths, review_columns=range(5, 9) if count == 9 and "columncolor{reviewpeach}" in x else (),
                       header_rows=2 if count == 9 else 1)
             # Preserve the explanatory peach note after the tables.
             tail = x[blocks[-1].end():]
@@ -315,6 +315,10 @@ for x in re.split(pat, body, flags=re.S):
                 content, end = braced(tail, note.end() - 1)
                 content = re.sub(r"\\footnotesize\s*", "", content)
                 write(review_markup(r"\peachaddition{" + content + "}"))
+            else:
+                note = re.search(r"\\footnotesize\s*\n(.*?)\\end\{table\*?\}", tail, re.S)
+                if note:
+                    write(note[1].strip())
         if wide:
             cols(2)
     elif x.startswith((r"\section", r"\subsection")):

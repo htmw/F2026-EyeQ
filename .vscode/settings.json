@@ -15,7 +15,7 @@
     },
     {
       "name": "export-paper-word",
-      "command": "%DIR%/.venv/bin/python",
+      "command": "./.venv/bin/python",
       "args": [
         "%DIR%/export_word.py"
       ]
