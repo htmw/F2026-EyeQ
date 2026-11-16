@@ -1,5 +1,5 @@
 % !LW recipe = DUAL paper PDF and Word
-% Source: team draft v0.12. Compile twice with pdflatex or use latexmk -pdf paper.tex.
+% Source: team draft v0.13. Compile twice with pdflatex or use latexmk -pdf paper.tex.
 \documentclass[conference,a4paper]{IEEEtran}
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb,graphicx,booktabs,longtable,url}
@@ -19,7 +19,7 @@ Pace University, New York, NY, USA\\
 \maketitle
 \begin{abstract}
 
-Cataract and glaucoma are leading causes of blindness, and both leave signs on a colour fundus
+Cataract and glaucoma are leading causes of blindness, and both leave signs on a color fundus
 photograph, although cataract appears only indirectly, as reduced image clarity. We present DUAL, a
 triage aid that screens a single photograph for both conditions using a ResNet-50 backbone shared by
 two binary heads. For each condition it returns No concern, Refer, or Uncertain, refer. The models
@@ -58,8 +58,8 @@ irreversible blindness. About 64.3 million people aged 40 to 80 had glaucoma in 
 projected to reach 111.8 million by 2040 \cite{ref3}, and in population studies more than half of
 glaucoma cases had not been detected before \cite{ref4}.
 
-Colour fundus photographs are quick to acquire and are already collected in diabetic retinopathy
-screening programmes \cite{ref5}. Deep learning systems trained on these photographs have detected
+Color fundus photographs are quick to acquire and are already collected in diabetic retinopathy
+screening programs \cite{ref5}. Deep learning systems trained on these photographs have detected
 possible glaucoma \cite{ref5}, glaucomatous optic neuropathy \cite{ref6}, \cite{ref7} and visually
 significant cataract \cite{ref2} with high AUROC. However, most of these systems address one disease
 at a time, and many report their best results on data from the same source as their training data.
@@ -94,7 +94,7 @@ deep learning system on 48,116 photographs graded by 21 ophthalmologists and rep
 0.986 for referable glaucomatous optic neuropathy on 8,000 validation photographs. About half of the
 false negatives in their study had coexisting eye conditions, mostly high or pathologic myopia. Ting
 et al. \cite{ref5} reported an AUROC of 0.942 for possible glaucoma in a national diabetic
-retinopathy screening programme. Christopher et al. \cite{ref11} compared several architectures on
+retinopathy screening program. Christopher et al. \cite{ref11} compared several architectures on
 14,822 photographs and found that transfer learning from ImageNet improved accuracy and shortened
 training, reaching an AUROC of 0.91. Diaz-Pinto et al. \cite{ref12} fine-tuned five ImageNet models,
 including ResNet-50, tested them across the public glaucoma data sets available to them, and
@@ -112,9 +112,9 @@ also respond to haze from other causes. This possibility motivated the media-opa
 in Section VIII-E.
 
 Multi-task learning trains related tasks together on a shared representation, which can help each
-task generalise \cite{ref14}. In ophthalmology, Cen et al. \cite{ref15} built a platform trained on
+task generalize \cite{ref14}. In ophthalmology, Cen et al. \cite{ref15} built a platform trained on
 249,620 photographs that detects 39 fundus diseases and conditions, and ODIR-5K was released
-together with a benchmark for recognising eight diagnostic categories from paired fundus photographs
+together with a benchmark for recognizing eight diagnostic categories from paired fundus photographs
 \cite{ref16}. DUAL limits the problem to two conditions and compares the shared model directly with
 single-disease models trained in the same way.
 
@@ -123,7 +123,7 @@ that a pneumonia model trained on chest radiographs from two hospital systems dr
 of 0.931 on internal data to 0.815 at a third hospital system. For glaucoma, Hemelings et al.
 \cite{ref9} noted that single-clinic models often struggle on external data because glaucoma
 prevalence, cameras and the definition of glaucoma differ. Their G-RISK model, which uses
-standardised disc-centred images, kept high performance across 13 data sources, with AUROCs of 0.976
+standardized disc-centered images, kept high performance across 13 data sources, with AUROCs of 0.976
 and 0.984 in two population cohorts. Liu et al. \cite{ref7} similarly tested a glaucoma system on
 clinical, population-based and web-sourced photographs.
 
@@ -140,7 +140,7 @@ validation on four public data sets, and explicit shortcut checks.
 
 \section{Data}
 
-DUAL was trained only on the ODIR-5K data set \cite{ref16}, using its 3,500 labelled training
+DUAL was trained only on the ODIR-5K data set \cite{ref16}, using its 3,500 labeled training
 patients with one fundus photograph of each eye, or 7,000 photographs in total. Labels were assigned
 per eye, as described in Section IV. To measure how well the models perform on photographs from
 other sources, four further data sets were used for testing only and never for training, tuning or
@@ -187,29 +187,29 @@ DRISHTI-GS, ACRIMA and retina\_dataset\_2016.
 
 For each photograph, the pipeline first tries to locate the circular fundus region by separating the
 retina from the dark background around it. If the detected region covers at least 20\% of the image,
-a square crop centred on that region is used. Otherwise, the pipeline falls back to the largest
-centred square that fits inside the original image. This fallback prevents a failed fundus detection
+a square crop centered on that region is used. Otherwise, the pipeline falls back to the largest
+centered square that fits inside the original image. This fallback prevents a failed fundus detection
 from producing a wrong crop, which matters most for images with unusual framing or tightly cropped
-retinal regions. Applying the same preprocessing procedure across all five datasets to ensures consistent image dimensions it also allows a more reliable model comparison between internal and external evaluation results.
+retinal regions. Applying the same preprocessing to all five data sets keeps image sizes consistent and makes internal and external results easier to compare.
 
 The crop is then resized to 512 \(\times\) 512 pixels and saved as a separate preprocessed image, so
 the original photographs are never modified.
 
 \section{Model and Training}
 
-All models were implemented in PyTorch and use a ResNet-50 backbone \cite{ref25} initialised with ImageNet weights \cite{ref26}. The
+All models were implemented in PyTorch and use a ResNet-50 backbone \cite{ref25} initialized with ImageNet weights \cite{ref26}. The
 final classification layer is removed, so the backbone returns a 2,048-value feature vector for each
 512 \(\times\) 512 input image. The DUAL model attaches two separate linear heads to this shared
 backbone, one for cataract and one for glaucoma, and each head outputs a single logit. For the
 multi-task ablation (Section VIII-C), we also built two single-task models from the same backbone
 with one head each: a cataract-only model and a glaucoma-only model.
 
-All models were trained with the same settings: the Adam optimiser \cite{ref27} with a learning rate
+All models were trained with the same settings: the Adam optimizer \cite{ref27} with a learning rate
 of 0.0001, a batch size of 8 and a maximum of 30 epochs. Each head used a binary cross-entropy loss
 with a positive-class weight equal to the ratio of negative to positive eyes in the training split
 (about 20.4 for cataract and 23.3 for glaucoma) to offset the class imbalance. Using identical training configurations for the shared and single-task models supports a fair comparison of their performance and helps isolate the effect of multi-task learning. The shared model
 minimized the sum of its two head losses. Training images were randomly flipped horizontally with a
-probability of 0.5 and rotated by up to 10 degrees. All images were normalised with the ImageNet
+probability of 0.5 and rotated by up to 10 degrees. All images were normalized with the ImageNet
 channel statistics, and validation images were not augmented.
 
 After each epoch, the model was evaluated on the validation split using the AUROC for its own
@@ -240,7 +240,7 @@ glaucoma-only models and three shared models with two heads each.
 The decision threshold for each head was chosen on the calibrated validation probabilities. The rule
 requires a sensitivity of at least 90\%, counted before any uncertain referrals, and among the
 thresholds that meet this floor it selects the one with the fewest false positives, that is, the
-highest specificity. Ties are broken in favour of the higher threshold. This rule replaced an
+highest specificity. Ties are broken in favor of the higher threshold. This rule replaced an
 earlier proposal based on a weighted Youden index because it keeps missed cases low while limiting
 unnecessary referrals.
 
@@ -303,7 +303,7 @@ ascending order. The margin is
 \[
 k=\lceil0.05N\rceil,\qquad m=d_{(k)}.
 \]
-An eye is labelled Uncertain, refer when $|p-t^*|\leq m$.
+An eye is labeled Uncertain, refer when $|p-t^*|\leq m$.
 For $N=1{,}024$, $k=52$. Ties at the boundary are included, so the band can
 contain more than 52 eyes. The final referral rule is
 \[
@@ -431,12 +431,12 @@ between seeds, and the per-seed confidence intervals overlapped widely. At the f
 the two designs made similar trade-offs. The cataract-only models referred 39 or 40 of the 40
 cataract eyes at a specificity of 91.3\% to 92.4\%, compared with 40 of 40 at 91.5\% to 93.8\% for
 the shared model. The glaucoma-only models referred 42 to 44 of the 45 glaucoma eyes at 61.6\% to
-71.5\%, compared with 40 to 44 at 67.3\% to 73.0\% for the shared model. The shared model had slightly higher mean internal AUROC, but external performance differences varied by dataset; these results do not establish equivalence or non-inferiority. The application uses only one network instead of two. They do not show that sharing improves accuracy.
+71.5\%, compared with 40 to 44 at 67.3\% to 73.0\% for the shared model. The shared model had slightly higher mean internal AUROC, but external performance differences varied by dataset; these results do not establish equivalence or non-inferiority, and they do not show that sharing improves accuracy. A shared model also means that the application needs only one network instead of two.
 
 Paired differences, computed with the same 2,000 bootstrap resamples for both designs
 (\path{results/task17/paired_auroc_differences.csv}), support this. Internally, the shared model was
 higher in all six head and seed pairs, but only cataract with seed 42 had a 95\% interval above zero
-(+0.008, 0.002 to 0.015). Externally, only ACRIMA gave intervals that excluded zero, in favour of
+(+0.008, 0.002 to 0.015). Externally, only ACRIMA gave intervals that excluded zero, in favor of
 the shared model (+0.109 to +0.195), and on that set both designs were near or below chance. All
 other intervals included zero. The full comparison is reported in
 \path{results/task17/ablation_comparison.md}.
@@ -521,7 +521,7 @@ diagnosis and no media-opacity, image-quality or exclusion flag, which leaves 31
 cataract eyes. In most heatmaps, including those of normal eyes, the strongest activation lay along
 the upper edge of the circular fundus image (Fig.~\ref{fig:2}, a to d), and some referred
 photographs also showed broad activation over hazy regions. Each heatmap is scaled to its own range,
-so its colours show where the model looked within one photograph, not how strong the evidence was.
+so its colors show where the model looked within one photograph, not how strong the evidence was.
 The heatmaps suggest that the cataract head may respond to features of the image edge or to overall
 image quality as well as to cataract. This is consistent with the media-opacity and blur results,
 but the heatmaps are supporting observations only.
@@ -595,9 +595,9 @@ non-commercial use.
 External cataract testing relies on a single data set, retina\_dataset\_2016, which has 100 cataract
 photographs and on which the application model reached an AUROC of 0.909. Glaucoma, by contrast, was
 tested on three external data sets in addition to retina\_dataset\_2016. Conclusions about how well
-cataract detection generalises are therefore weaker than those for glaucoma.
+cataract detection generalizes are therefore weaker than those for glaucoma.
 
-The retina\_dataset\_2016 collection has no documented origin or licence, and ACRIMA contains tight
+The retina\_dataset\_2016 collection has no documented origin or license, and ACRIMA contains tight
 optic disc crops rather than full fundus photographs like those used in training. The folder labels
 of retina\_dataset\_2016 have not been clinically verified and should not be treated as adjudicated
 ground truth. The copy we used is kept in the team repository with a SHA-256 hash for every image.
@@ -637,7 +637,7 @@ were often strongest at the upper edge of the image. The glaucoma heatmaps peake
 disc in only 37\% of ORIGA photographs, so the glaucoma head may also rely on evidence away from the
 disc. Hazy or blurred photographs without cataract are therefore likely to be referred, and on data
 sets where cataract photographs are also hazier, cataract results may overstate the model's true
-ability to recognise cataract.
+ability to recognize cataract.
 
 DUAL screens for only two conditions, from one photograph per eye, and does not grade severity. It
 is a triage aid for deciding who should see a specialist, not a diagnostic device, and it has not
@@ -658,11 +658,11 @@ and the glaucoma heatmaps peak on the optic disc in only some of the photographs
 prototype and is not ready for clinical screening.
 
 Several directions for future work follow from these results. External cataract testing needs a
-second labelled data set, such as AREDS2, which requires institutional access. Thresholds and
+second labeled data set, such as AREDS2, which requires institutional access. Thresholds and
 calibration should be checked on photographs from each new camera and population before use, ideally
 with patient identifiers so that confidence intervals account for both eyes of a person. Training
-with media-opacity and blurred photographs labelled as not cataract, or with image-quality labels,
-could reduce the sensitivity to haze, and disc-centred images, as used by G-RISK \cite{ref9}, could
+with media-opacity and blurred photographs labeled as not cataract, or with image-quality labels,
+could reduce the sensitivity to haze, and disc-centered images, as used by G-RISK \cite{ref9}, could
 make glaucoma detection more stable across data sets. \pendingedit{Finally, connecting the frozen model to the
 web application and testing it with clinic staff would show whether the referral load is workable in
 practice. [Pending: revise once the model connection and application testing are complete.]}
@@ -807,8 +807,8 @@ Imaging (ISBI), 2014, pp. 53-56.
 
 \bibitem{ref24}
 
-retina\_dataset (fundus images labelled normal, cataract, glaucoma and retina disease; no documented
-clinical source, grading method or licence), GitHub repository, 2016. Original repository
+retina\_dataset (fundus images labeled normal, cataract, glaucoma and retina disease; no documented
+clinical source, grading method or license), GitHub repository, 2016. Original repository
 sjchoi86/retina\_dataset removed; surviving copy with the original November 2016 commit history
 used: \url{https://github.com/yiweichen04/retina_dataset} (accessed Sep. 2026).
 
